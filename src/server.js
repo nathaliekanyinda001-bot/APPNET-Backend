@@ -1,39 +1,131 @@
 
 
-require("dotenv").config();
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
 
-const http = require("http");
-const app = require("./app");
+dotenv.config();
+
+// =========================
+// DATABASE
+// =========================
 const { testConnection } = require("./config/database");
 
-const PORT = process.env.PORT || 5000;
+// =========================
+// CLOUDINARY
+// =========================
+require("./config/cloudinary");
 
-const server = http.createServer(app);
+// =========================
+// APP INIT
+// =========================
+const app = express();
+
+// =========================
+// SECURITY MIDDLEWARES
+// =========================
+app.use(helmet());
+
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+app.use(morgan("dev"));
+
+// =========================
+// RATE LIMIT
+// =========================
+const apiLimiter = require("./middlewares/rateLimit.middleware");
+app.use("/api", apiLimiter);
+
+// =========================
+// ROUTES IMPORTS
+// =========================
+const registerRoute = require("./Routes/Login/register");
+const loginRoute = require("./Routes/Login/login");
+const createAppRoute = require("./Routes/Apps/createApp");
+const mediaRoute = require("./Routes/Apps/uploadMedia");
+
+
+
+// =========================
+// ROUTES
+// =========================
+
+// Auth
+app.use("/api/auth/register", registerRoute);
+app.use("/api/auth/login", loginRoute);
+// Apps
+app.use("/api/apps", createAppRoute);
+app.use("/api/apps", mediaRoute);
+
+
+// =========================
+// HOME ROUTE
+// =========================
+app.get("/", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "🚀 APPNET Backend API fonctionne correctement",
+        version: "1.0.0"
+    });
+});
+
+// =========================
+// API HEALTH
+// =========================
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        status: "OK",
+        uptime: process.uptime(),
+        timestamp: new Date()
+    });
+});
+
+// =========================
+// START SERVER
+// =========================
+const PORT = process.env.PORT || 5000;
 
 async function startServer() {
     try {
 
-        // Vérifier la connexion MySQL
+        // Test MySQL Aiven
         await testConnection();
 
-        server.listen(PORT, () => {
+        console.log("🚀 DB READY - STARTING SERVER");
 
-            console.log("");
-            console.log("========================================");
-            console.log("🚀 APPNET Backend démarré");
-            console.log("========================================");
-            console.log(`🌍 URL : http://localhost:${PORT}`);
-            console.log(`📦 Environnement : ${process.env.NODE_ENV}`);
-            console.log(`🗄️ Base : ${process.env.DB_NAME}`);
-            console.log("========================================");
-            console.log("");
+        app.listen(PORT, () => {
+
+            console.log(`
+==================================================
+☁️ CLOUDINARY CONNECTED
+🌍 Cloud Name : ${process.env.CLOUDINARY_CLOUD_NAME}
+==================================================
+
+==================================================
+🚀 APPNET SERVER STARTED SUCCESSFULLY
+🌍 URL  : http://localhost:${PORT}
+⚡ PORT : ${PORT}
+📦 DATABASE : ${process.env.DB_NAME}
+📅 STATUS : ONLINE
+==================================================
+            `);
 
         });
 
     } catch (error) {
 
-        console.error("❌ Impossible de démarrer le serveur");
-        console.error(error);
+        console.error("❌ DATABASE CONNECTION FAILED");
+        console.error(error.message);
 
         process.exit(1);
 

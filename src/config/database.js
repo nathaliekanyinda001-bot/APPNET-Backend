@@ -1,13 +1,8 @@
-
-
-
 const mysql = require("mysql2/promise");
-const fs = require("fs");
-const path = require("path");
 require("dotenv").config();
 
 // ===============================
-// MYSQL POOL
+// MYSQL POOL (AIVEN)
 // ===============================
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -21,10 +16,8 @@ const db = mysql.createPool({
   queueLimit: 0,
 
   ssl: {
-    ca: fs.readFileSync(
-      path.join(__dirname, "../../certs/ca.pem")
-    ),
-  },
+    rejectUnauthorized: false
+  }
 });
 
 // ===============================
@@ -40,6 +33,7 @@ async function testConnection() {
     connection.release();
   } catch (error) {
     console.error("❌ Erreur connexion MySQL :", error.message);
+    throw error;
   }
 }
 
@@ -47,6 +41,6 @@ async function testConnection() {
 // EXPORTS
 // ===============================
 module.exports = db;
-
 module.exports.testConnection = testConnection;
+
 
