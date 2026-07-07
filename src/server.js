@@ -52,6 +52,9 @@ const registerRoute = require("./Routes/Login/register");
 const loginRoute = require("./Routes/Login/login");
 const createAppRoute = require("./Routes/Apps/createApp");
 const mediaRoute = require("./Routes/Apps/uploadMedia");
+const versionRoutes = require("./Routes/apps/versions");
+const downloadRoute = require("./Routes/apps/download");
+const myAppsRoute = require("./Routes/Apps/myApps");
 
 
 
@@ -65,6 +68,12 @@ app.use("/api/auth/login", loginRoute);
 // Apps
 app.use("/api/apps", createAppRoute);
 app.use("/api/apps", mediaRoute);
+app.use("/api/apps", versionRoutes);
+app.use("/api/apps", downloadRoute);
+app.use("/api/apps", myAppsRoute);
+
+
+
 
 
 // =========================
