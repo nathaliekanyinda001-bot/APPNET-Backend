@@ -5,23 +5,32 @@ const express = require("express");
 const router = express.Router();
 
 const db = require("../../config/database");
+
 const authMiddleware = require("../../middlewares/auth.middleware");
+
 const upload = require("../../middlewares/upload.middleware");
 
 const { uploadFile } = require("../../services/storage");
 
 
+
 // ======================================================
-// UPLOAD APP VERSION (APK / XAPK / AAB / APKS)
+// DEV : ENVOYER UNE NOUVELLE VERSION APPLICATION
 // POST /api/apps/:id/version
 // ======================================================
 
+
 router.post(
+
     "/:id/version",
+
     authMiddleware,
+
     upload.single("file"),
 
+
     async (req, res) => {
+
 
         try {
 
@@ -32,12 +41,13 @@ router.post(
 
 
 
+            // ==================================================
+            // 1 - VERIFIER FICHIER
+            // ==================================================
 
-            // ======================================================
-            // 1. VERIFIER LE FICHIER
-            // ======================================================
 
             if (!req.file) {
+
 
                 return res.status(400).json({
 
@@ -47,35 +57,43 @@ router.post(
 
                 });
 
+
             }
 
 
 
 
+            // ==================================================
+            // 2 - DONNEES VERSION
+            // ==================================================
 
-
-            // ======================================================
-            // 2. INFORMATIONS VERSION
-            // ======================================================
 
             const {
+
                 version_name,
+
                 version_code,
+
                 changelog
+
+
             } = req.body;
 
 
 
 
-            if (!version_name || !version_code) {
+            if(!version_name || !version_code){
+
 
                 return res.status(400).json({
 
                     success:false,
 
-                    message:"version_name et version_code sont obligatoires"
+                    message:
+                    "version_name et version_code obligatoires"
 
                 });
+
 
             }
 
@@ -84,23 +102,33 @@ router.post(
 
 
 
+            // ==================================================
+            // 3 - VERIFIER PROPRIETAIRE APP
+            // ==================================================
 
-            // ======================================================
-            // 3. VERIFIER PROPRIETAIRE APPLICATION
-            // ======================================================
 
             const [apps] = await db.query(
 
                 `
-                SELECT id
+                SELECT 
+                    id,
+                    title
+
                 FROM apps
+
                 WHERE id = ?
+
                 AND developer_id = ?
+
                 `,
 
+
                 [
+
                     appId,
+
                     developerId
+
                 ]
 
             );
@@ -108,14 +136,16 @@ router.post(
 
 
 
-            if(apps.length === 0) {
+
+            if(apps.length === 0){
 
 
                 return res.status(403).json({
 
                     success:false,
 
-                    message:"Vous n'avez pas accès à cette application"
+                    message:
+                    "Vous n'êtes pas propriétaire de cette application"
 
                 });
 
@@ -129,15 +159,21 @@ router.post(
 
 
 
-            // ======================================================
-            // 4. FORMAT FICHIER
-            // ======================================================
+            // ==================================================
+            // 4 - VERIFIER FORMAT
+            // ==================================================
+
 
             const extension =
-                req.file.originalname
-                .split(".")
-                .pop()
-                .toLowerCase();
+
+            req.file.originalname
+
+            .split(".")
+
+            .pop()
+
+            .toLowerCase();
+
 
 
 
@@ -145,8 +181,11 @@ router.post(
             const allowedFormats = [
 
                 "apk",
+
                 "xapk",
+
                 "aab",
+
                 "apks"
 
             ];
@@ -154,14 +193,16 @@ router.post(
 
 
 
-            if(!allowedFormats.includes(extension)) {
+
+            if(!allowedFormats.includes(extension)){
 
 
                 return res.status(400).json({
 
                     success:false,
 
-                    message:"Format non accepté"
+                    message:
+                    "Format accepté : APK, XAPK, AAB, APKS"
 
                 });
 
@@ -175,33 +216,36 @@ router.post(
 
 
 
-            // ======================================================
-            // 5. UPLOAD IDRIVE E2
-            // ======================================================
+            // ==================================================
+            // 5 - UPLOAD IDRIVE E2
+            // ==================================================
 
 
             const uploadResult =
-                await uploadFile(
 
-                    req.file,
+            await uploadFile(
 
-                    `apps/${appId}/versions/${version_name}`
+                req.file,
 
-                );
+                `apps/${appId}/versions/${version_name}`
 
-
-
+            );
 
 
 
-            if(!uploadResult.success) {
+
+
+
+
+            if(!uploadResult.success){
 
 
                 return res.status(500).json({
 
                     success:false,
 
-                    message:"Erreur pendant l'upload du fichier"
+                    message:
+                    "Erreur stockage fichier"
 
                 });
 
@@ -215,65 +259,81 @@ router.post(
 
 
 
-            // ======================================================
-            // 6. ENREGISTREMENT MYSQL
-            // ======================================================
+
+
+            // ==================================================
+            // 6 - INSERT DATABASE
+            // ==================================================
 
 
             const [result] = await db.query(
 
-                `
-                INSERT INTO app_versions
-                (
 
-                    app_id,
+            `
 
-                    version_name,
+            INSERT INTO app_versions
 
-                    version_code,
+            (
 
-                    file_url,
+                app_id,
 
-                    storage_key,
+                version_name,
 
-                    file_size_bytes,
+                version_code,
 
-                    file_format,
+                file_url,
 
-                    security_status,
+                storage_key,
 
-                    changelog
+                file_size_bytes,
 
-                )
+                file_format,
 
-                VALUES
+                security_status,
 
-                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                status,
 
-                `,
+                changelog,
+
+                submitted_by
 
 
-                [
+            )
 
-                    appId,
+            VALUES
 
-                    version_name,
+            (?,?,?,?,?,?,?,?,?,?,?)
 
-                    version_code,
 
-                    uploadResult.url,
+            `,
 
-                    uploadResult.key,
 
-                    req.file.size,
+            [
 
-                    extension,
+                appId,
 
-                    "scanning",
+                version_name,
 
-                    changelog || null
+                Number(version_code),
 
-                ]
+                uploadResult.url,
+
+                uploadResult.key,
+
+                req.file.size,
+
+                extension,
+
+                "scanning",
+
+                "pending",
+
+                changelog || null,
+
+                developerId
+
+            ]
+
 
             );
 
@@ -285,9 +345,10 @@ router.post(
 
 
 
-            // ======================================================
-            // 7. REPONSE
-            // ======================================================
+            // ==================================================
+            // 7 - REPONSE
+            // ==================================================
+
 
 
             return res.status(201).json({
@@ -296,17 +357,20 @@ router.post(
                 success:true,
 
 
-                message:"Version publiée avec succès",
+                message:
+                "Nouvelle version envoyée pour validation",
 
 
 
                 version:{
 
 
-                    id:result.insertId,
+                    id:
+                    result.insertId,
 
 
-                    app_id:appId,
+                    app_id:
+                    appId,
 
 
                     version_name,
@@ -315,16 +379,20 @@ router.post(
                     version_code,
 
 
-                    file_format:extension,
+                    format:
+                    extension,
 
 
-                    file_size_bytes:req.file.size,
+                    status:
+                    "pending",
 
 
-                    storage_key:uploadResult.key,
+                    security_status:
+                    "scanning",
 
 
-                    security_status:"scanning"
+                    download_url:
+                    uploadResult.url
 
 
                 }
@@ -338,7 +406,10 @@ router.post(
 
 
 
-        } catch(error) {
+        }
+
+        catch(error){
+
 
 
             console.error(
@@ -355,9 +426,11 @@ router.post(
 
                 success:false,
 
-                message:"Erreur serveur interne"
+                message:
+                "Erreur serveur interne"
 
             });
+
 
 
         }
@@ -368,6 +441,130 @@ router.post(
 );
 
 
+
+
+
+
+
+
+
+// ======================================================
+// OBTENIR TOUTES LES VERSIONS D'UNE APP
+// GET /api/apps/:id/versions
+// ======================================================
+
+
+router.get(
+
+    "/:id/versions",
+
+    async(req,res)=>{
+
+
+        try{
+
+
+            const appId=req.params.id;
+
+
+
+            const [versions]=await db.query(
+
+
+            `
+
+            SELECT
+
+                id,
+
+                app_id,
+
+                version_name,
+
+                version_code,
+
+                file_url,
+
+                file_size_bytes,
+
+                file_format,
+
+                security_status,
+
+                status,
+
+                changelog,
+
+                created_at
+
+
+            FROM app_versions
+
+
+            WHERE app_id = ?
+
+
+            ORDER BY version_code DESC
+
+
+            `,
+
+
+            [
+
+                appId
+
+            ]
+
+            );
+
+
+
+
+            return res.json({
+
+                success:true,
+
+                versions
+
+            });
+
+
+
+
+
+        }
+
+        catch(error){
+
+
+            console.error(
+
+                "GET VERSIONS ERROR:",
+
+                error
+
+            );
+
+
+
+            return res.status(500).json({
+
+                success:false,
+
+                message:
+                "Erreur serveur"
+
+            });
+
+
+
+        }
+
+
+    }
+
+);
 
 module.exports = router;
 
