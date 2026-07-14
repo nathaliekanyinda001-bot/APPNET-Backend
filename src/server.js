@@ -1,6 +1,9 @@
 
 
 
+
+
+
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -112,28 +115,26 @@ app.use("/api", apiLimiter);
 
 
 // AUTH
-const registerRoute = require("./Routes/Login/register");
+const registerRoute = require("./Routes/Login/Register");
 const loginRoute = require("./Routes/Login/login");
-
-
-// APPS
-const createAppRoute = require("./Routes/Apps/createApp");
-const mediaRoute = require("./Routes/Apps/uploadMedia");
+const createAppRoute = require("./Routes/apps/createApp");
+const mediaRoute = require("./Routes/apps/uploadMedia");
 const versionRoutes = require("./Routes/apps/versions");
 const downloadRoute = require("./Routes/apps/download");
 const myAppsRoute = require("./Routes/apps/myApps");
 const getAppDetailsRoute = require("./Routes/apps/getAppDetails");
-
-
-// ADMIN
 const updateAppStatus = require("./Routes/Admin/updateAppStatus");
 const getPendingApps = require("./Routes/Admin/getPendingApps");
 const adminAppsDashboard = require("./Routes/Admin/getAdminAppsDashboard");
 const pendingAppDetails = require("./Routes/Admin/getPendingAppDetails");
-const appVersionsRoutes = require("./Routes/admin/appVersions");
+const appVersionsRoutes = require("./Routes/Admin/appVersions");
+const updateAppRoute = require("./Routes/apps/updateApp");
+const submitAppRoute = require("./Routes/apps/submitApp");
+const approveUpdate = require("./Routes/Admin/approveUpdate");
+const rejectUpdate = require("./Routes/Admin/rejectUpdate");
+const publicAppsRoute = require("./Routes/public/getPublicApps");
+const publicAppDetailsRoute = require("./Routes/public/getPublicAppDetails");
 const sitemapRoute = require("./Routes/Public/sitemap");
-
-
 
 
 
@@ -219,9 +220,28 @@ app.use(
     "/api/admin",
     adminAppsDashboard
 );
-app.use("/api/admin",pendingAppDetails);
-app.use("/api/admin/app-versions",appVersionsRoutes);
+
+
+app.use(
+    "/api/admin",
+    pendingAppDetails
+);
+
+
+app.use(
+    "/api/admin/app-versions",
+    appVersionsRoutes
+);
+
+app.use("/api/apps",updateAppRoute);
+app.use("/api/apps",submitAppRoute);
+app.use("/api/admin", approveUpdate);
+app.use("/api/admin", rejectUpdate);
+app.use("/api/public",publicAppsRoute);
+app.use("/api/public",publicAppDetailsRoute);
 app.use("/", sitemapRoute);
+
+
 
 
 
@@ -384,3 +404,4 @@ async function startServer(){
 
 
 startServer();
+
