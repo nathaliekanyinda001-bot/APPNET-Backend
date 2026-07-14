@@ -131,7 +131,7 @@ const getPendingApps = require("./Routes/Admin/getPendingApps");
 const adminAppsDashboard = require("./Routes/Admin/getAdminAppsDashboard");
 const pendingAppDetails = require("./Routes/Admin/getPendingAppDetails");
 const appVersionsRoutes = require("./Routes/admin/appVersions");
-
+const sitemapRoute = require("./Routes/Public/sitemap");
 
 
 
@@ -219,19 +219,9 @@ app.use(
     "/api/admin",
     adminAppsDashboard
 );
-
-
-app.use(
-    "/api/admin",
-    pendingAppDetails
-);
-
-
-app.use(
-    "/api/admin/app-versions",
-    appVersionsRoutes
-);
-
+app.use("/api/admin",pendingAppDetails);
+app.use("/api/admin/app-versions",appVersionsRoutes);
+app.use("/", sitemapRoute);
 
 
 
