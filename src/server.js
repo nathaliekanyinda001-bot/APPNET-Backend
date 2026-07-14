@@ -128,7 +128,7 @@ const getPendingApps = require("./Routes/Admin/getPendingApps");
 const adminAppsDashboard = require("./Routes/Admin/getAdminAppsDashboard");
 const pendingAppDetails = require("./Routes/Admin/getPendingAppDetails");
 const appVersionsRoutes = require("./Routes/Admin/appVersions");
-const updateAppRoute = require("./Routes/apps/updateApp");
+//const updateAppRoute = require("./Routes/apps/updateApp");
 const submitAppRoute = require("./Routes/apps/submitApp");
 const approveUpdate = require("./Routes/Admin/approveUpdate");
 const rejectUpdate = require("./Routes/Admin/rejectUpdate");
@@ -233,7 +233,7 @@ app.use(
     appVersionsRoutes
 );
 
-app.use("/api/apps",updateAppRoute);
+//app.use("/api/apps",updateAppRoute);
 app.use("/api/apps",submitAppRoute);
 app.use("/api/admin", approveUpdate);
 app.use("/api/admin", rejectUpdate);
