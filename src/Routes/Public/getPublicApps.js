@@ -1,5 +1,3 @@
-
-
 const express = require("express");
 const router = express.Router();
 
@@ -24,6 +22,7 @@ router.get(
                     id,
                     package_name,
                     title,
+                    slug,                    -- ✅ AJOUT de la colonne slug
                     short_description,
                     long_description,
                     logo_url,
