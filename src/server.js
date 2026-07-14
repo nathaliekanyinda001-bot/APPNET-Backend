@@ -116,6 +116,7 @@ const appVersionsRoutes = require("./Routes/Admin/appVersions");
 
 const publicAppsRoute = require("./Routes/Public/getPublicApps");
 const publicAppDetailsRoute = require("./Routes/Public/getPublicAppDetails");
+const publicAppSlugRoute = require("./Routes/Public/getPublicAppBySlug");
 
 // SEO SITEMAP
 
@@ -252,6 +253,12 @@ app.use(
     "/",
     sitemapRoute
 );
+
+app.use(
+    "/api/public",
+    publicAppSlugRoute
+);
+
 
 
 
